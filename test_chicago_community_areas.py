@@ -4,6 +4,8 @@ from chicago_community_areas import (get_neighborhood_for_point,
                                      get_community_area_coords,
                                      download_shapefiles)
 
+import pandas as pd
+
 class TestExampleAreas(unittest.TestCase):
     """Test cases for some example lat, lng coordinates.  Verify that the
     code picks the correct neighborhoods"""
@@ -37,7 +39,26 @@ class TestExampleAreas(unittest.TestCase):
         res = get_neighborhood_for_point(41.8672125, -87.6263141, self.areas)
         self.assertEqual(res, "Near South Side")
 
-        #
+        filenames = [
+            # foo.csv, ...
+        ]
+
+        dataframes = {
+            f: pd.read_csv(f).dropna(subset=['Latitude']) for f in filenames
+        }
+
+        for name, df in dataframes.iteritems():
+            df.insert(0, 'Neighborhood', 'None')
+
+            for index, row in df.iterrows():
+                df.loc[index, 'Neighborhood'] = get_neighborhood_for_point(
+                    row['Latitude'],
+                    row['Longitude'],
+                    self.areas
+                )
+                print("File {}: row {} of {}".format(name, index + 1, len(df)))
+
+            df.to_csv(name)
 
 if __name__ == "__main__":
     unittest.main()
